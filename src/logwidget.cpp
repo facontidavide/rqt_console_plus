@@ -43,6 +43,16 @@ LogWidget::LogWidget(LogsTableModel& tablemodel, QWidget *parent)
   connect( &model, SIGNAL(rowsAboutToBeInserted(const QModelIndex&, int, int)),
            this, SLOT(on_rowsAboutToBeInserted(const QModelIndex&,int,int))  );
 
+
+  if( model.rowCount() > 0)
+  {
+    message_filter.resize( model.rowCount(), true );
+    logger_filter.resize( model.rowCount(), true );
+    severity_filter.resize( model.rowCount(), true );
+    time_filter.resize( model.rowCount(), true );
+    updateTimeRange();
+  }
+
  // connect( ui.tableView, SIGNAL(customContextMenuRequested(const QPoint&)),
   //         this, SLOT(on_tableView_RightClick(const QPoint&)) );
 
@@ -119,6 +129,13 @@ void LogWidget::xmlLoadState(QDomNode &state)
     bool checked = state.firstChildElement( button[i]->objectName() ).attribute("isChecked").toInt();
     button[i]->setChecked(checked);
   }
+
+  applyMessageFilter( 0, model.rowCount() -1 );
+  applyLoggerFilter( 0, model.rowCount() -1 );
+  applyTimeFilter( 0, model.rowCount() -1 );
+  applySeverityFilter( 0, model.rowCount() -1 );
+
+  updateRowVisibility();
 }
 
 inline bool filterByMessage(const QStringList &filter_words, const QString &message, bool all_of_them)
@@ -144,11 +161,11 @@ inline bool filterByMessage(const QStringList &filter_words, const QString &mess
   }
 }
 
-void LogWidget::applyFilter(QLineEdit* line_edit, QComboBox* combo, std::vector<bool>& filter_vector,
-                            std::function<const QString&(int)> message_to_check, int first_row, int last_row)
+void LogWidget::applyFilter(QLineEdit* line_edit, QComboBox* combo,
+                            std::vector<bool>& filter_vector,
+                            std::function<const QString&(int)> message_to_check,
+                            int first_row, int last_row)
 {
-  filter_vector.resize( model.rowCount() );
-
   const QString& filter = line_edit->text();
 
   // accept if no filter
@@ -184,9 +201,9 @@ void LogWidget::applyFilter(QLineEdit* line_edit, QComboBox* combo, std::vector<
 
     for( int row = first_row; row <= last_row; ++row )
     {
-      QString message =message_to_check(row );
+      QString message = message_to_check(row );
       int pos = 0;
-      filter_vector[row] = validator.validate( message, pos );
+      filter_vector[row] = validator.validate( message, pos ) == QValidator::Acceptable;
     }
   }
   else if( combo->currentIndex() == 3) // regex
@@ -198,7 +215,7 @@ void LogWidget::applyFilter(QLineEdit* line_edit, QComboBox* combo, std::vector<
     {
       QString message = message_to_check(row );
       int pos = 0;
-      filter_vector[row] = validator.validate( message, pos );
+      filter_vector[row] = validator.validate( message, pos ) == QValidator::Acceptable;
     }
   }
 
@@ -226,8 +243,6 @@ void LogWidget::applyTimeFilter(int first_row, int last_row)
 {
 //  qDebug() << "applyTimeFilter";
 
-  time_filter.resize( model.rowCount() );
-
   const auto& min = ui.timeRangeMin->dateTime();
   const auto& max = ui.timeRangeMax->dateTime();
 
@@ -241,8 +256,6 @@ void LogWidget::applyTimeFilter(int first_row, int last_row)
 
 void LogWidget::applySeverityFilter(int first_row, int last_row)
 {
-  severity_filter.resize( model.rowCount() );
-
   for (int row=first_row; row< last_row; row++)
   {
     if( model.severity( row ) == LogsTableModel::DEBUG)
@@ -341,13 +354,8 @@ void LogWidget::on_checkBoxLoggerFilter_toggled(bool checked)
 }
 
 
-void LogWidget::on_rowsInserted(const QModelIndex &, int first_row, int last_row)
+void LogWidget::updateTimeRange()
 {
-  applyMessageFilter( first_row, last_row );
-  applyLoggerFilter( first_row, last_row );
-  applyTimeFilter( first_row, last_row );
-  applySeverityFilter( first_row, last_row );
-
   ui.timeRangeMin->setMinimumDateTime( model.timestamp(0) );
   ui.timeRangeMax->setMinimumDateTime( model.timestamp(0) );
 
@@ -355,6 +363,23 @@ void LogWidget::on_rowsInserted(const QModelIndex &, int first_row, int last_row
 
   ui.timeRangeMin->setMaximumDateTime( model.timestamp(N) );
   ui.timeRangeMax->setMaximumDateTime( model.timestamp(N) );
+}
+
+void LogWidget::on_rowsInserted(const QModelIndex &, int first_row, int last_row)
+{
+  message_filter.resize( last_row + 1 );
+  logger_filter.resize( last_row + 1  );
+  severity_filter.resize( last_row + 1  );
+  time_filter.resize( last_row + 1  );
+
+  applyMessageFilter( first_row, last_row );
+  applyLoggerFilter( first_row, last_row );
+  applyTimeFilter( first_row, last_row );
+  applySeverityFilter( first_row, last_row );
+
+  updateTimeRange();
+
+  updateRowVisibility();
 }
 
 void LogWidget::on_rowsAboutToBeInserted(const QModelIndex &, int , int )

@@ -96,6 +96,7 @@ private:
 
   void updateRowVisibility();
 
+  void updateTimeRange();
 };
 
 }  // namespace rqt_console2
