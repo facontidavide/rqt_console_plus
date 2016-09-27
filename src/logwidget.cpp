@@ -246,7 +246,7 @@ void LogWidget::applyTimeFilter(int first_row, int last_row)
   const auto& min = ui.timeRangeMin->dateTime();
   const auto& max = ui.timeRangeMax->dateTime();
 
-  for (int row=first_row; row< last_row; row++)
+  for (int row=first_row; row<= last_row; row++)
   {
     const auto& t = model.timestamp(row);
     time_filter[row] = ( min <= t && t <= max );
@@ -256,7 +256,7 @@ void LogWidget::applyTimeFilter(int first_row, int last_row)
 
 void LogWidget::applySeverityFilter(int first_row, int last_row)
 {
-  for (int row=first_row; row< last_row; row++)
+  for (int row=first_row; row<= last_row; row++)
   {
     if( model.severity( row ) == LogsTableModel::DEBUG)
     {
@@ -380,6 +380,8 @@ void LogWidget::on_rowsInserted(const QModelIndex &, int first_row, int last_row
   updateTimeRange();
 
   updateRowVisibility();
+
+  ui.tableView->scrollToBottom();
 }
 
 void LogWidget::on_rowsAboutToBeInserted(const QModelIndex &, int , int )

@@ -57,19 +57,31 @@
    </property>
    <widget class="QMenu" name="menu_File">
     <property name="title">
-     <string>&amp;App</string>
+     <string>File</string>
+    </property>
+    <addaction name="separator"/>
+    <addaction name="actionSaveLogs"/>
+    <addaction name="separator"/>
+    <addaction name="action_Quit"/>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>Layout</string>
+    </property>
+    <addaction name="actionLoadLayout"/>
+    <addaction name="actionSave_Layout"/>
+   </widget>
+   <widget class="QMenu" name="menuSource">
+    <property name="title">
+     <string>Sources</string>
     </property>
     <addaction name="actionRead_rosbag"/>
     <addaction name="actionListen_rosout"/>
     <addaction name="actionListen_rosout2"/>
-    <addaction name="action_Preferences"/>
-    <addaction name="separator"/>
-    <addaction name="actionSave_Layout"/>
-    <addaction name="actionLoadLayout"/>
-    <addaction name="separator"/>
-    <addaction name="action_Quit"/>
    </widget>
    <addaction name="menu_File"/>
+   <addaction name="menuSource"/>
+   <addaction name="menuView"/>
   </widget>
   <action name="action_Quit">
    <property name="text">
@@ -101,11 +113,17 @@
    </property>
   </action>
   <action name="actionListen_rosout">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Listen /rosout</string>
    </property>
   </action>
   <action name="actionListen_rosout2">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Listen /rosout2</string>
    </property>
@@ -118,6 +136,11 @@
   <action name="actionLoadLayout">
    <property name="text">
     <string>Load Layout</string>
+   </property>
+  </action>
+  <action name="actionSaveLogs">
+   <property name="text">
+    <string>Save logs into a robag</string>
    </property>
   </action>
  </widget>

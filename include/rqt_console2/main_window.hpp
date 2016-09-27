@@ -14,6 +14,7 @@
 
 #include <QMainWindow>
 #include "logs_table_model.hpp"
+#include "qnode.hpp"
 #include "ui_main_window.h"
 
 
@@ -52,9 +53,17 @@ private slots:
 
   void on_tab_manager_tabCloseRequested(int index);
 
+  void on_actionListen_rosout_toggled(bool toggled);
+
+#ifdef USE_ROSOUT2
+  void on_actionListen_rosout2_toggled(bool toggled);
+#endif
+
 private:
   Ui::MainWindowDesign ui;
   LogsTableModel model;
+
+  QNode qnode;
 
 };
 

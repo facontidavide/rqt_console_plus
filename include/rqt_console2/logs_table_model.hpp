@@ -34,6 +34,12 @@ public:
 
   QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 
+  void appendRow(const rosgraph_msgs::Log& log);
+
+#ifdef USE_ROSOUT2
+  void appendRow(const rosout2_msg::LogMsg& log);
+#endif
+
   const QString& message(int index) const;
 
   const QString& nodeName(int index) const;
@@ -43,6 +49,7 @@ public:
   const QDateTime &timestamp(int index) const;
 
   void loadRosbag(const rosbag::Bag& bag);
+
 
 private:
   typedef struct{
@@ -55,6 +62,12 @@ private:
   }LogItem;
 
   std::vector<LogItem>     logs;
+
+  LogItem convertRosout(const rosgraph_msgs::Log &log);
+
+#ifdef USE_ROSOUT2
+  LogItem convertRosout(const rosout2_msg::LogMsg &log);
+#endif
 
 };
 

@@ -28,7 +28,8 @@ using namespace Qt;
 
 
 MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
-  : QMainWindow(parent)
+  : QMainWindow(parent),
+    qnode(argc, argv, model)
 {
   ui.setupUi(this); // Calling this incidentally connects all ui's triggers to on_...() callbacks in this class.
   QObject::connect(ui.actionRead_rosbag, SIGNAL(triggered(bool)), this, SLOT(loadRosbag()) );
@@ -43,6 +44,10 @@ MainWindow::MainWindow(int argc, char** argv, QWidget *parent)
   newTabButton->setText("+");
   QObject::connect(newTabButton, SIGNAL(clicked()), this, SLOT(newTab()));
   newTabButton->setToolTip(tr("Add page"));
+
+#ifndef USE_ROSOUT2
+  ui.actionListen_rosout2->setEnabled(false);
+#endif
 }
 
 MainWindow::~MainWindow() {}
@@ -194,3 +199,25 @@ void rqt_console2::MainWindow::on_tab_manager_tabCloseRequested(int index)
   if( ui.tab_manager->count() > 1)
     ui.tab_manager->removeTab(index);
 }
+
+void rqt_console2::MainWindow::on_actionListen_rosout_toggled(bool toggled)
+{
+  if( qnode.started() == false) qnode.init();
+
+  if( toggled )
+    qnode.subcribeRosout();
+  else
+    qnode.unsubcribeRosout();
+}
+
+#ifdef USE_ROSOUT2
+void rqt_console2::MainWindow::on_actionListen_rosout2_toggled(bool toggled)
+{
+  if( qnode.started() == false) qnode.init();
+
+  if( toggled )
+    qnode.subcribeRosout2( );
+  else
+    qnode.unsubcribeRosout2( );
+}
+#endif

@@ -20,7 +20,7 @@
 #include <string>
 #include <QThread>
 #include <QStringListModel>
-
+#include "logs_table_model.hpp"
 
 /*****************************************************************************
 ** Namespaces
@@ -32,38 +32,46 @@ namespace rqt_console2 {
 ** Class
 *****************************************************************************/
 
-class QNode : public QThread {
+class QNode : public QThread
+{
     Q_OBJECT
 public:
-	QNode(int argc, char** argv );
+  QNode(int argc, char** argv , LogsTableModel &tablemodel);
 	virtual ~QNode();
 	bool init();
 	bool init(const std::string &master_url, const std::string &host_url);
 	void run();
 
-	/*********************
-	** Logging
-	**********************/
-	enum LogLevel {
-	         Debug,
-	         Info,
-	         Warn,
-	         Error,
-	         Fatal
-	 };
+  bool started();
 
-	QStringListModel* loggingModel() { return &logging_model; }
-	void log( const LogLevel &level, const std::string &msg);
+  void subcribeRosout();
+  void unsubcribeRosout();
+
+#ifdef USE_ROSOUT2
+  void subcribeRosout2();
+  void unsubcribeRosout2();
+#endif
 
 Q_SIGNALS:
-	void loggingUpdated();
+
     void rosShutdown();
 
 private:
 	int init_argc;
 	char** init_argv;
-	ros::Publisher chatter_publisher;
-    QStringListModel logging_model;
+
+  LogsTableModel& model;
+
+  ros::Subscriber subA;
+  ros::Subscriber subB;
+  std::unique_ptr<ros::NodeHandle> _node;
+
+
+  void callbackRosout(const rosgraph_msgs::Log::ConstPtr& msg);
+
+#ifdef USE_ROSOUT2
+  void callbackRosout2(const rosout2_msg::LogMsg::ConstPtr& msg);
+#endif
 };
 
 }  // namespace rqt_console2

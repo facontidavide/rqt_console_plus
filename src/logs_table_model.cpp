@@ -91,6 +91,67 @@ QVariant LogsTableModel::data(const QModelIndex &index, int role) const
   }
 }
 
+LogsTableModel::LogItem LogsTableModel::convertRosout( const rosgraph_msgs::Log &log)
+{
+  LogItem item;
+  switch( log.level ){
+  case rosgraph_msgs::Log::DEBUG : item.level_raw = DEBUG; break;
+  case rosgraph_msgs::Log::INFO  : item.level_raw = INFO;break;
+  case rosgraph_msgs::Log::WARN  : item.level_raw = WARNINGS;break;
+  case rosgraph_msgs::Log::ERROR : item.level_raw = ERROR;break;
+  }
+
+  item.node    = log.name.c_str();
+  item.source  = log.function.c_str();
+  item.message = log.msg.c_str();
+
+  item.time_raw = QDateTime::fromMSecsSinceEpoch( log.header.stamp.sec*1000 + log.header.stamp.nsec / 1000000 );
+  item.time_text = item.time_raw.toString("hh:mm: ss.zzz");
+  return item;
+}
+
+#ifdef USE_ROSOUT2
+LogsTableModel::LogItem LogsTableModel::convertRosout(const rosout2_msg::LogMsg &log)
+{
+  LogItem item;
+  switch( log.level ){
+  case rosout2_msg::LogMsg::DEBUG : item.level_raw = DEBUG; break;
+  case rosout2_msg::LogMsg::INFO  : item.level_raw = INFO; break;
+  case rosout2_msg::LogMsg::WARN  : item.level_raw = WARNINGS; break;
+  case rosout2_msg::LogMsg::ERROR : item.level_raw = ERROR; break;
+  }
+
+  item.node    = log.node_name.c_str();
+  item.source  = log.logger_name.c_str();
+  item.message = log.message.c_str();
+
+  item.time_raw = QDateTime::fromMSecsSinceEpoch( log.stamp.sec*1000 + log.stamp.nsec / 1000000 );
+  item.time_text = item.time_raw.toString("hh:mm: ss.zzz");
+  return item;
+}
+
+void LogsTableModel::appendRow(const rosout2_msg::LogMsg& log)
+{
+  LogItem item = convertRosout(log);
+
+  this->beginInsertRows( QModelIndex(), logs.size(), logs.size());
+  logs.push_back( item );
+  this->endInsertRows();
+}
+
+
+#endif
+
+void LogsTableModel::appendRow(const rosgraph_msgs::Log &log)
+{
+    LogItem item = convertRosout(log);
+
+    this->beginInsertRows( QModelIndex(), logs.size(), logs.size());
+    logs.push_back( item );
+    this->endInsertRows();
+}
+
+
 const QString &LogsTableModel::message(int index) const
 {
   return logs[ index ].message;
@@ -124,50 +185,22 @@ void LogsTableModel::loadRosbag(const rosbag::Bag &bag)
 
   logs.clear();
 
-  ros::Time ros_time;
-
   for(rosbag::MessageInstance const log: bag_view)
   {
-    LogItem item;
-
     rosgraph_msgs::Log::ConstPtr rout1 = log.instantiate<rosgraph_msgs::Log>();
     if (rout1 != nullptr)
     {
-      switch( rout1->level ){
-      case rosgraph_msgs::Log::DEBUG : item.level_raw = DEBUG; break;
-      case rosgraph_msgs::Log::INFO  : item.level_raw = INFO;break;
-      case rosgraph_msgs::Log::WARN  : item.level_raw = WARNINGS;break;
-      case rosgraph_msgs::Log::ERROR : item.level_raw = ERROR;break;
-      }
-
-      item.node    = rout1->name.c_str();
-      item.source  = rout1->function.c_str();
-      item.message = rout1->msg.c_str();
-      ros_time     = rout1->header.stamp;
+      logs.push_back( convertRosout( *rout1 ) );
     }
 
 #ifdef USE_ROSOUT2
     rosout2_msg::LogMsg::ConstPtr rout2 = log.instantiate<rosout2_msg::LogMsg>();
     if (rout2 != nullptr)
     {
-      switch( rout2->level ){
-      case rosout2_msg::LogMsg::DEBUG : item.level_raw = DEBUG; break;
-      case rosout2_msg::LogMsg::INFO  : item.level_raw = INFO; break;
-      case rosout2_msg::LogMsg::WARN  : item.level_raw = WARNINGS; break;
-      case rosout2_msg::LogMsg::ERROR : item.level_raw = ERROR; break;
-      }
-
-      item.node    = rout2->node_name.c_str();
-      item.source  = rout2->logger_name.c_str();
-      item.message = rout2->message.c_str();
-      ros_time     = rout2->stamp;
+      logs.push_back( convertRosout( *rout2 ) );
     }
 #endif
 
-    item.time_raw = QDateTime::fromMSecsSinceEpoch( ros_time.sec*1000 + ros_time.nsec / 1000000 );
-    item.time_text = item.time_raw.toString("hh:mm: ss.zzz");
-
-    logs.push_back( item );
   }
   this->beginInsertRows( QModelIndex(), 0, logs.size() -1);
   this->endInsertRows();
