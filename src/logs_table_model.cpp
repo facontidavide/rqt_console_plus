@@ -102,7 +102,13 @@ LogsTableModel::LogItem LogsTableModel::convertRosout( const rosgraph_msgs::Log 
   }
 
   item.node    = log.name.c_str();
-  item.source  = log.function.c_str();
+
+  item.source  = log.file.c_str();
+  item.source  += QString(" ");
+  item.source  += log.function.c_str();
+  item.source  += QString(":");
+  item.source  += QString::number(log.line);
+
   item.message = log.msg.c_str();
 
   item.time_raw = QDateTime::fromMSecsSinceEpoch( log.header.stamp.sec*1000 + log.header.stamp.nsec / 1000000 );

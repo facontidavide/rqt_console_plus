@@ -34,8 +34,8 @@ LogWidget::LogWidget(LogsTableModel& tablemodel, QWidget *parent)
   ui.tableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
   ui.tableView->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
   ui.tableView->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Interactive);
-  ui.tableView->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Stretch);
-  ui.tableView->horizontalHeader()->setSectionResizeMode(4, QHeaderView::Interactive);
+  ui.tableView->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Interactive);
+  ui.tableView->horizontalHeader()->setSectionResizeMode(4, QHeaderView::Stretch);
 
   connect( &model, SIGNAL(rowsInserted(const QModelIndex&, int, int)),
            this, SLOT(on_rowsInserted(const QModelIndex&,int,int))  );
