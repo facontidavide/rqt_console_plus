@@ -18,7 +18,7 @@
 
 #include <ros/ros.h>
 #include <string>
-#include <QThread>
+#include <QObject>
 #include <QStringListModel>
 #include "logs_table_model.hpp"
 
@@ -32,15 +32,14 @@ namespace rqt_console2 {
 ** Class
 *****************************************************************************/
 
-class QNode : public QThread
+class QNode : public QObject
 {
-    Q_OBJECT
+  Q_OBJECT
 public:
-  QNode(int argc, char** argv , LogsTableModel &tablemodel);
-	virtual ~QNode();
-	bool init();
-	bool init(const std::string &master_url, const std::string &host_url);
-	void run();
+  QNode(int argc, char** argv , LogsTableModel &tablemodel, QObject *parent = 0);
+  virtual ~QNode();
+  bool init();
+  bool init(const std::string &master_url, const std::string &host_url);
 
   bool started();
 
@@ -52,13 +51,16 @@ public:
   void unsubcribeRosout2();
 #endif
 
+public slots:
+  void spin();
+
 Q_SIGNALS:
 
-    void rosShutdown();
+  void rosShutdown();
 
 private:
-	int init_argc;
-	char** init_argv;
+  int init_argc;
+  char** init_argv;
 
   LogsTableModel& model;
 

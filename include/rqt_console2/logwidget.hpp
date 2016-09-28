@@ -12,11 +12,14 @@
 ** Includes
 *****************************************************************************/
 
+
+#include <QDomDocument>
+#include <boost/circular_buffer.hpp>
 #include <QWidget>
 #include <QValidator>
 #include "logs_table_model.hpp"
 #include "ui_logwidget.h"
-#include <QDomDocument>
+#include "modelfilter.hpp"
 
 /*****************************************************************************
 ** Namespace
@@ -55,7 +58,10 @@ private slots:
 
   void on_rowsInserted(const QModelIndex & parent, int first_row, int last_row);
 
-  void on_rowsAboutToBeInserted(const QModelIndex & parent, int start, int end);
+  void on_rowsShifted(int shift);
+
+  void on_rowsRemoved(const QModelIndex & parent, int first, int last_row);
+
 
   void on_buttonEnableInfo_toggled(bool checked);
 
@@ -67,8 +73,6 @@ private slots:
 
   void on_comboBoxLoggerFilter_currentIndexChanged(int index);
 
-  void on_tableView_RightClick(const QPoint&);
-
   void on_pushButtonTimeReset_pressed();
 
   void on_timeRangeMax_dateTimeChanged(const QDateTime &dateTime);
@@ -79,12 +83,15 @@ private:
   Ui::LogWidgetDesign ui;
   LogsTableModel& model;
 
-  std::vector<bool> message_filter;
-  std::vector<bool> logger_filter;
-  std::vector<bool> time_filter;
-  std::vector<bool> severity_filter;
+  boost::circular_buffer<bool> message_filter;
+  boost::circular_buffer<bool> logger_filter;
+  boost::circular_buffer<bool> time_filter;
+  boost::circular_buffer<bool> severity_filter;
 
-  void applyFilter(QLineEdit* line_edit, QComboBox* combo, std::vector<bool> &filter_vector, std::function<const QString&(int)>, int first_row, int last_row);
+  void applyFilter(QLineEdit* line_edit, QComboBox* combo,
+                   boost::circular_buffer<bool> &filter_vector,
+                   std::function<const QString&(int)>,
+                   int first_row, int last_row);
 
   void applyMessageFilter(int first_row, int last_row);
 
@@ -94,9 +101,11 @@ private:
 
   void applySeverityFilter(int first_row, int last_row);
 
-  void updateRowVisibility();
+  void updateRowVisibility(int model_count = -1);
 
   void updateTimeRange();
+
+  ModelFilter proxy_model;
 };
 
 }  // namespace rqt_console2

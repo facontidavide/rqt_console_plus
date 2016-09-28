@@ -6,6 +6,8 @@
 #include <QDateTime>
 #include <rosgraph_msgs/Log.h>
 #include <rosbag/view.h>
+#include <boost/circular_buffer.hpp>
+
 
 #ifdef USE_ROSOUT2
   #include <rosout2_msg/LogMsg.h>
@@ -30,11 +32,12 @@ public:
 
   // Basic functionality:
   int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+
   int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
   QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 
-  void appendRow(const rosgraph_msgs::Log& log);
+  void appendRow(const std::vector<rosgraph_msgs::Log::ConstPtr> &pushed_logs);
 
 #ifdef USE_ROSOUT2
   void appendRow(const rosout2_msg::LogMsg& log);
@@ -50,9 +53,10 @@ public:
 
   void loadRosbag(const rosbag::Bag& bag);
 
-
 private:
+
   typedef struct{
+    size_t count;
     QDateTime time_raw;
     QString  time_text;
     Severity level_raw;
@@ -61,7 +65,12 @@ private:
     QString source;
   }LogItem;
 
-  std::vector<LogItem>     logs;
+  boost::circular_buffer<LogItem> _logs;
+
+  size_t _count;
+
+
+  enum{ MAX_CAPACITY = 20000 }; // max capacity of the circular buffer
 
   LogItem convertRosout(const rosgraph_msgs::Log &log);
 
@@ -69,6 +78,11 @@ private:
   LogItem convertRosout(const rosout2_msg::LogMsg &log);
 #endif
 
+signals:
+
+  void rowsShifted(int);
+
 };
+
 
 #endif // LOGSTABLEMODEL_HPP

@@ -18,6 +18,7 @@
 #include <QHeaderView>
 #include <QToolButton>
 #include <QIcon>
+#include <QTimer>
 #include <iostream>
 #include "../include/rqt_console2/main_window.hpp"
 #include "../include/rqt_console2/logwidget.hpp"
@@ -202,8 +203,13 @@ void rqt_console2::MainWindow::on_tab_manager_tabCloseRequested(int index)
 
 void rqt_console2::MainWindow::on_actionListen_rosout_toggled(bool toggled)
 {
-  if( qnode.started() == false) qnode.init();
-
+  if( qnode.started() == false)
+  {
+    qnode.init();
+    QTimer *timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), &qnode, SLOT(spin()));
+    timer->start(10);
+  }
   if( toggled )
     qnode.subcribeRosout();
   else
@@ -213,8 +219,13 @@ void rqt_console2::MainWindow::on_actionListen_rosout_toggled(bool toggled)
 #ifdef USE_ROSOUT2
 void rqt_console2::MainWindow::on_actionListen_rosout2_toggled(bool toggled)
 {
-  if( qnode.started() == false) qnode.init();
-
+  if( qnode.started() == false)
+  {
+    qnode.init();
+    QTimer *timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), &qnode, SLOT(spin()));
+    timer->start(10);
+  }
   if( toggled )
     qnode.subcribeRosout2( );
   else

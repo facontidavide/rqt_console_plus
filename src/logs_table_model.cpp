@@ -2,10 +2,13 @@
 #include <QDateTime>
 #include <QBrush>
 #include <QColor>
+#include <QDebug>
 
 LogsTableModel::LogsTableModel(QObject *parent)
-  : QAbstractTableModel(parent)
+  : QAbstractTableModel(parent),
+    _logs(MAX_CAPACITY) // initial capacity
 {
+  _count = 0;
 }
 
 QVariant LogsTableModel::headerData(int section, Qt::Orientation orientation, int role) const
@@ -17,11 +20,12 @@ QVariant LogsTableModel::headerData(int section, Qt::Orientation orientation, in
   if (orientation == Qt::Horizontal){
     switch(section)
     {
-    case 0: return "Time"; break;
-    case 1: return "Severity";break;
-    case 2: return "Node";break;
-    case 3: return "Message";break;
-    case 4: return "Source";break;
+    case 0: return "#"; break;
+    case 1: return "Time"; break;
+    case 2: return "Severity";break;
+    case 3: return "Node";break;
+    case 4: return "Message";break;
+    case 5: return "Source";break;
     }
   }
   else{
@@ -36,8 +40,7 @@ int LogsTableModel::rowCount(const QModelIndex &parent) const
   if (parent.isValid())
     return 0;
 
-
-  return logs.size();
+  return _logs.size();
 }
 
 int LogsTableModel::columnCount(const QModelIndex &parent) const
@@ -45,7 +48,7 @@ int LogsTableModel::columnCount(const QModelIndex &parent) const
   if (parent.isValid())
     return 0;
 
-  return 5;
+  return 6;
 }
 
 QVariant LogsTableModel::data(const QModelIndex &index, int role) const
@@ -53,17 +56,18 @@ QVariant LogsTableModel::data(const QModelIndex &index, int role) const
   if (!index.isValid())
     return QVariant();
 
-  if (index.row() >= logs.size())
+  if (index.row() >= _logs.size())
     return QVariant();
 
-  const LogItem& log = logs[ index.row() ];
+  const LogItem& log = _logs[ index.row() ];
 
   if (role == Qt::DisplayRole)
   {
     switch( index.column() )
     {
-    case 0: return log.time_text;
-    case 1: {
+    case 0: return log.count;
+    case 1: return log.time_text;
+    case 2: {
       switch( log.level_raw )
       {
       case DEBUG:      return "DEBUG";
@@ -72,18 +76,29 @@ QVariant LogsTableModel::data(const QModelIndex &index, int role) const
       case ERROR:      return "ERROR";
       }
     } break;
-    case 2: return log.node;
-    case 3: return log.message;
-    case 4: return log.source;
+    case 3: return log.node;
+    case 4: return log.message;
+    case 5: return log.source;
     }
   }
   else if( role== Qt::ForegroundRole){
-    switch( logs[ index.row() ].level_raw )
+    switch( log.level_raw )
     {
     case DEBUG:    return QBrush( QColor::fromRgb(50,  50 , 50)) ;  // black
     case INFO:     return QBrush( QColor::fromRgb(0,   0  , 255));  // blue
     case WARNINGS: return QBrush( QColor::fromRgb(240, 120, 0));    // orange
     case ERROR:    return QBrush( QColor::fromRgb(255, 0  , 0));    // red
+    }
+  }
+  else if( role == Qt::UserRole){
+    switch( index.column() )
+    {
+    case 0: return log.count;
+    case 1: return log.time_raw;
+    case 2: return log.level_raw;
+    case 3: return log.node;
+    case 4: return log.message;
+    case 5: return log.source;
     }
   }
   else{
@@ -93,6 +108,8 @@ QVariant LogsTableModel::data(const QModelIndex &index, int role) const
 
 LogsTableModel::LogItem LogsTableModel::convertRosout( const rosgraph_msgs::Log &log)
 {
+  _count++;
+
   LogItem item;
   switch( log.level ){
   case rosgraph_msgs::Log::DEBUG : item.level_raw = DEBUG; break;
@@ -101,6 +118,7 @@ LogsTableModel::LogItem LogsTableModel::convertRosout( const rosgraph_msgs::Log 
   case rosgraph_msgs::Log::ERROR : item.level_raw = ERROR;break;
   }
 
+  item.count   = _count;
   item.node    = log.name.c_str();
 
   item.source  = log.file.c_str();
@@ -138,44 +156,79 @@ LogsTableModel::LogItem LogsTableModel::convertRosout(const rosout2_msg::LogMsg 
 
 void LogsTableModel::appendRow(const rosout2_msg::LogMsg& log)
 {
+  if( _logs.full() && _logs.size() < MAX_CAPACITY)
+  {
+    _logs.set_capacity( std::min( (size_t)(_logs.size() * 1.5), (size_t)MAX_CAPACITY) );
+  }
+
   LogItem item = convertRosout(log);
 
-  this->beginInsertRows( QModelIndex(), logs.size(), logs.size());
-  logs.push_back( item );
+  this->beginInsertRows( QModelIndex(), _logs.size(), _logs.size());
+  _logs.push_back( item );
   this->endInsertRows();
 }
 
 
 #endif
 
-void LogsTableModel::appendRow(const rosgraph_msgs::Log &log)
+void LogsTableModel::appendRow(const std::vector<rosgraph_msgs::Log::ConstPtr>& pushed_logs)
 {
-    LogItem item = convertRosout(log);
+  size_t old_size = _logs.size();
+  size_t new_size = old_size + pushed_logs.size();
 
-    this->beginInsertRows( QModelIndex(), logs.size(), logs.size());
-    logs.push_back( item );
-    this->endInsertRows();
+  /* if( new_size > _logs.capacity() && _logs.capacity() < MAX_CAPACITY)
+  {
+    const size_t new_capacity =  std::min( (size_t)(_logs.size() * 1.5), (size_t)MAX_CAPACITY);
+    _logs.set_capacity( new_capacity );
+  }*/
+
+  int to_add   = pushed_logs.size();
+  int to_shift = 0;
+
+  if( new_size > MAX_CAPACITY)
+  {
+    to_add = (MAX_CAPACITY - old_size);
+    to_shift = new_size - MAX_CAPACITY;
+    new_size = MAX_CAPACITY;
+  }
+
+  const size_t last_row  = new_size - 1;
+  const size_t first_row = new_size - pushed_logs.size() ;
+
+  for (int i=0; i < pushed_logs.size(); i++){
+    _logs.push_back( convertRosout( *pushed_logs[i]) );
+  }
+
+  if(to_shift > 0)
+  {
+    this->beginRemoveRows( QModelIndex(), 0 , to_shift-1);
+    this->endRemoveRows();
+  }
+
+  this->beginInsertRows( QModelIndex(), first_row , last_row);
+  this->endInsertRows();
+
 }
 
 
 const QString &LogsTableModel::message(int index) const
 {
-  return logs[ index ].message;
+  return _logs[ index ].message;
 }
 
 const QString &LogsTableModel::nodeName(int index) const
 {
-  return logs[ index ].node;
+  return _logs[ index ].node;
 }
 
 LogsTableModel::Severity LogsTableModel::severity(int index) const
 {
-  return logs[ index ].level_raw;
+  return _logs[ index ].level_raw;
 }
 
 const QDateTime& LogsTableModel::timestamp(int index) const
 {
-  return logs[ index ].time_raw;
+  return _logs[ index ].time_raw;
 }
 
 void LogsTableModel::loadRosbag(const rosbag::Bag &bag)
@@ -189,25 +242,25 @@ void LogsTableModel::loadRosbag(const rosbag::Bag &bag)
 
   rosbag::View bag_view(bag, rosbag::TopicQuery(topics));
 
-  logs.clear();
+  _logs.clear();
 
   for(rosbag::MessageInstance const log: bag_view)
   {
     rosgraph_msgs::Log::ConstPtr rout1 = log.instantiate<rosgraph_msgs::Log>();
     if (rout1 != nullptr)
     {
-      logs.push_back( convertRosout( *rout1 ) );
+      _logs.push_back( convertRosout( *rout1 ) );
     }
 
 #ifdef USE_ROSOUT2
     rosout2_msg::LogMsg::ConstPtr rout2 = log.instantiate<rosout2_msg::LogMsg>();
     if (rout2 != nullptr)
     {
-      logs.push_back( convertRosout( *rout2 ) );
+      _logs.push_back( convertRosout( *rout2 ) );
     }
 #endif
 
   }
-  this->beginInsertRows( QModelIndex(), 0, logs.size() -1);
+  this->beginInsertRows( QModelIndex(), 0, _logs.size() -1);
   this->endInsertRows();
 }

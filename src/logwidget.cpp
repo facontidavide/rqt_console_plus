@@ -26,22 +26,32 @@ using namespace Qt;
 
 LogWidget::LogWidget(LogsTableModel& tablemodel, QWidget *parent)
   : QWidget(parent),
-    model(tablemodel)
+    model(tablemodel),
+    proxy_model(this)
 {
   ui.setupUi(this); // Calling this incidentally connects all ui's triggers to on_...() callbacks in this class.
 
-  ui.tableView->setModel( &model );
+  proxy_model.setSourceModel(&model);
+  ui.tableView->setModel(&proxy_model);
+  // ui.tableView->setModel( &model );
+
   ui.tableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
   ui.tableView->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
-  ui.tableView->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Interactive);
+  ui.tableView->horizontalHeader()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
   ui.tableView->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Interactive);
-  ui.tableView->horizontalHeader()->setSectionResizeMode(4, QHeaderView::Stretch);
+  ui.tableView->horizontalHeader()->setSectionResizeMode(4, QHeaderView::Interactive);
+  ui.tableView->horizontalHeader()->setSectionResizeMode(5, QHeaderView::Stretch);
+
+  ui.tableView->verticalHeader()->setVisible(false);
 
   connect( &model, SIGNAL(rowsInserted(const QModelIndex&, int, int)),
            this, SLOT(on_rowsInserted(const QModelIndex&,int,int))  );
 
-  connect( &model, SIGNAL(rowsAboutToBeInserted(const QModelIndex&, int, int)),
-           this, SLOT(on_rowsAboutToBeInserted(const QModelIndex&,int,int))  );
+  connect( &model, SIGNAL(rowsAboutToBeRemoved(const QModelIndex&, int, int)),
+           this, SLOT(on_rowsRemoved(const QModelIndex&,int,int))  );
+
+  connect( &model, SIGNAL(rowsShifted(int)),
+           this, SLOT(on_rowsShifted(int))  );
 
 
   if( model.rowCount() > 0)
@@ -53,8 +63,14 @@ LogWidget::LogWidget(LogsTableModel& tablemodel, QWidget *parent)
     updateTimeRange();
   }
 
- // connect( ui.tableView, SIGNAL(customContextMenuRequested(const QPoint&)),
-  //         this, SLOT(on_tableView_RightClick(const QPoint&)) );
+  proxy_model.setSeverityDebugEnabled( ui.buttonEnableDebug->isChecked() );
+  proxy_model.setSeverityWarningsEnabled( ui.buttonEnableWarnings->isChecked() );
+  proxy_model.setSeverityErrorEnabled( ui.buttonEnableError->isChecked() );
+  proxy_model.setSeverityInfoEnabled( ui.buttonEnableInfo->isChecked() );
+
+  proxy_model.setMessageFilterEnabled( ui.checkBoxMessageFilter->isChecked() );
+  proxy_model.setNodeFilterEnabled( ui.checkBoxLoggerFilter->isChecked() );
+  proxy_model.setTimeFilterEnabled( ui.checkBoxTimeRange->isChecked() );
 
 }
 
@@ -65,7 +81,7 @@ QDomElement LogWidget::xmlSaveState( QDomDocument &doc)
 {
   QDomElement log_el = doc.createElement("LogWidget");
 
-  QCheckBox* checkBoxes[3] =   { ui.checkBoxMessageFilter, ui.checkBoxTimeRange, ui.checkBoxLoggerFilter };
+  QCheckBox* checkBoxes[3] =  { ui.checkBoxMessageFilter, ui.checkBoxTimeRange, ui.checkBoxLoggerFilter };
   for (int i=0; i<3; i++)
   {
     QDomElement element = doc.createElement(checkBoxes[i]->objectName());
@@ -130,10 +146,12 @@ void LogWidget::xmlLoadState(QDomNode &state)
     button[i]->setChecked(checked);
   }
 
-  applyMessageFilter( 0, model.rowCount() -1 );
-  applyLoggerFilter( 0, model.rowCount() -1 );
-  applyTimeFilter( 0, model.rowCount() -1 );
-  applySeverityFilter( 0, model.rowCount() -1 );
+  const int N = model.rowCount() -1;
+
+  applyMessageFilter( 0, N );
+  applyLoggerFilter( 0, N );
+  applyTimeFilter( 0, N );
+  applySeverityFilter( 0, N );
 
   updateRowVisibility();
 }
@@ -162,7 +180,7 @@ inline bool filterByMessage(const QStringList &filter_words, const QString &mess
 }
 
 void LogWidget::applyFilter(QLineEdit* line_edit, QComboBox* combo,
-                            std::vector<bool>& filter_vector,
+                            boost::circular_buffer<bool>& filter_vector,
                             std::function<const QString&(int)> message_to_check,
                             int first_row, int last_row)
 {
@@ -223,7 +241,7 @@ void LogWidget::applyFilter(QLineEdit* line_edit, QComboBox* combo,
 
 void LogWidget::applyMessageFilter(int first_row, int last_row)
 {
- // qDebug() << "applyMessageFilter";
+  // qDebug() << "applyMessageFilter";
 
   applyFilter( ui.lineEditMessageFilter, ui.comboBoxMessageFilter, message_filter,
                std::bind(&LogsTableModel::message, &model, std::placeholders::_1),
@@ -232,7 +250,7 @@ void LogWidget::applyMessageFilter(int first_row, int last_row)
 
 void LogWidget::applyLoggerFilter(int first_row, int last_row)
 {
-//  qDebug() << "applyLoggerFilter";
+  //  qDebug() << "applyLoggerFilter";
 
   applyFilter( ui.lineEditLoggerFilter, ui.comboBoxLoggerFilter, logger_filter,
                std::bind(&LogsTableModel::nodeName, &model, std::placeholders::_1),
@@ -241,7 +259,7 @@ void LogWidget::applyLoggerFilter(int first_row, int last_row)
 
 void LogWidget::applyTimeFilter(int first_row, int last_row)
 {
-//  qDebug() << "applyTimeFilter";
+  //  qDebug() << "applyTimeFilter";
 
   const auto& min = ui.timeRangeMin->dateTime();
   const auto& max = ui.timeRangeMax->dateTime();
@@ -254,32 +272,14 @@ void LogWidget::applyTimeFilter(int first_row, int last_row)
 }
 
 
-void LogWidget::applySeverityFilter(int first_row, int last_row)
-{
-  for (int row=first_row; row<= last_row; row++)
-  {
-    if( model.severity( row ) == LogsTableModel::DEBUG)
-    {
-      severity_filter[row]  = ui.buttonEnableDebug->isChecked();
-    }
-    else if( model.severity( row ) == LogsTableModel::INFO)
-    {
-      severity_filter[row]  = ui.buttonEnableInfo->isChecked();
-    }
-    else if( model.severity( row ) == LogsTableModel::WARNINGS)
-    {
-      severity_filter[row]  = ui.buttonEnableWarnings->isChecked();
-    }
-    else if( model.severity( row ) == LogsTableModel::ERROR)
-    {
-      severity_filter[row]  = ui.buttonEnableError->isChecked();
-    }
-  }
-}
 
-void LogWidget::updateRowVisibility()
+
+void LogWidget::updateRowVisibility(int model_count)
 {
-  for (int row=0; row< model.rowCount(); row++)
+  /*if( model_count < 0) model_count = model.rowCount();
+
+  int visible_count = 0;
+  for (int row=0; row< model_count; row++)
   {
     bool visible = true;
 
@@ -298,10 +298,14 @@ void LogWidget::updateRowVisibility()
     }
 
     visible &= severity_filter[row];
+    if( visible ) visible_count++;
 
     ui.tableView->setRowHidden( row, !visible);
   }
 
+  ui.statusbar->showMessage(
+        tr("Displaying ") + QString::number(visible_count) + tr(" of ")
+        + QString::number(model_count) + tr(" messages") );*/
 }
 
 void LogWidget::on_lineEditMessageFilter_textEdited(const QString &filter)
@@ -329,7 +333,6 @@ void LogWidget::on_checkBoxMessageFilter_toggled(bool checked)
   ui.comboBoxMessageFilter->setEnabled( checked );
   ui.lineEditMessageFilter->setEnabled( checked );
 
-  //applyMessageFilter( 0, model.rowCount() -1 );
   updateRowVisibility();
 }
 
@@ -339,8 +342,7 @@ void rqt_console2::LogWidget::on_checkBoxTimeRange_toggled(bool checked)
   ui.timeRangeMin->setEnabled( checked );
   ui.timeRangeMax->setEnabled( checked );
 
- // applyTimeFilter( 0, model.rowCount() -1 );
-  updateRowVisibility();
+  updateRowVisibility( );
 }
 
 void LogWidget::on_checkBoxLoggerFilter_toggled(bool checked)
@@ -349,8 +351,7 @@ void LogWidget::on_checkBoxLoggerFilter_toggled(bool checked)
   ui.comboBoxLoggerFilter->setEnabled( checked );
   ui.lineEditLoggerFilter->setEnabled( checked );
 
-  //applyLoggerFilter( 0, model.rowCount() -1 );
-  updateRowVisibility();
+  updateRowVisibility( );
 }
 
 
@@ -359,18 +360,21 @@ void LogWidget::updateTimeRange()
   ui.timeRangeMin->setMinimumDateTime( model.timestamp(0) );
   ui.timeRangeMax->setMinimumDateTime( model.timestamp(0) );
 
-  const int N = model.rowCount() -1;
+  const int LAST = model.rowCount() -1;
 
-  ui.timeRangeMin->setMaximumDateTime( model.timestamp(N) );
-  ui.timeRangeMax->setMaximumDateTime( model.timestamp(N) );
+  ui.timeRangeMin->setMaximumDateTime( model.timestamp(LAST) );
+  ui.timeRangeMax->setMaximumDateTime( model.timestamp(LAST) );
 }
 
 void LogWidget::on_rowsInserted(const QModelIndex &, int first_row, int last_row)
 {
-  message_filter.resize( last_row + 1 );
-  logger_filter.resize( last_row + 1  );
-  severity_filter.resize( last_row + 1  );
-  time_filter.resize( last_row + 1  );
+  const size_t N = model.rowCount();
+  message_filter.resize( N , true );
+  logger_filter.resize( N , true);
+  severity_filter.resize( N , true);
+  time_filter.resize( N , true);
+
+  //  qDebug() << N << " " << first_row << "/" <<last_row;
 
   applyMessageFilter( first_row, last_row );
   applyLoggerFilter( first_row, last_row );
@@ -379,14 +383,28 @@ void LogWidget::on_rowsInserted(const QModelIndex &, int first_row, int last_row
 
   updateTimeRange();
 
-  updateRowVisibility();
+  updateRowVisibility(N);
 
   ui.tableView->scrollToBottom();
+
 }
 
-void LogWidget::on_rowsAboutToBeInserted(const QModelIndex &, int , int )
+void LogWidget::on_rowsShifted(int shift)
 {
+  on_rowsInserted( QModelIndex(),
+                   model.rowCount() -shift,
+                   model.rowCount() -1);
+}
 
+void LogWidget::on_rowsRemoved(const QModelIndex &parent, int first_row, int last_row)
+{
+  for (int row=first_row; row<= last_row; row++)
+  {
+    message_filter.pop_front();
+    logger_filter.pop_front();
+    severity_filter.pop_front();
+    time_filter.pop_front();
+  }
 }
 
 
@@ -394,24 +412,30 @@ void LogWidget::on_buttonEnableDebug_toggled(bool checked)
 {
   applySeverityFilter( 0, model.rowCount() -1 );
   updateRowVisibility();
+  updateRowVisibility();
+  proxy_model.setSeverityDebugEnabled(checked);
 }
 
 void LogWidget::on_buttonEnableInfo_toggled(bool checked)
 {
   applySeverityFilter( 0, model.rowCount() -1 );
   updateRowVisibility();
+  proxy_model.setSeverityInfoEnabled(checked);
 }
 
 void LogWidget::on_buttonEnableWarnings_toggled(bool checked)
 {
   applySeverityFilter( 0, model.rowCount() -1 );
   updateRowVisibility();
+  proxy_model.setSeverityWarningsEnabled(checked);
 }
 
 void LogWidget::on_buttonEnableError_toggled(bool checked)
 {
   applySeverityFilter( 0, model.rowCount() -1 );
   updateRowVisibility();
+
+  proxy_model.setSeverityErrorEnabled(checked);
 }
 
 void LogWidget::on_lineEditLoggerFilter_textEdited(const QString &arg1)
@@ -424,12 +448,9 @@ void LogWidget::on_comboBoxLoggerFilter_currentIndexChanged(int index)
 {
   applyLoggerFilter( 0, model.rowCount() -1 );
   updateRowVisibility();
+
 }
 
-void LogWidget::on_tableView_RightClick(const QPoint &)
-{
-  qDebug() << "right clicked";
-}
 
 
 }  // namespace rqt_console2
@@ -439,11 +460,11 @@ void LogWidget::on_tableView_RightClick(const QPoint &)
 
 void rqt_console2::LogWidget::on_pushButtonTimeReset_pressed()
 {
-    ui.timeRangeMin->setDateTime( ui.timeRangeMin->minimumDateTime() );
-    ui.timeRangeMax->setDateTime( ui.timeRangeMin->maximumDateTime() );
+  ui.timeRangeMin->setDateTime( ui.timeRangeMin->minimumDateTime() );
+  ui.timeRangeMax->setDateTime( ui.timeRangeMin->maximumDateTime() );
 
-    applyTimeFilter( 0, model.rowCount() -1 );
-    updateRowVisibility();
+  applyTimeFilter( 0, model.rowCount() -1 );
+  updateRowVisibility();
 }
 
 void rqt_console2::LogWidget::on_timeRangeMax_dateTimeChanged(const QDateTime &dateTime)
@@ -456,6 +477,8 @@ void rqt_console2::LogWidget::on_timeRangeMax_dateTimeChanged(const QDateTime &d
 
   applyTimeFilter( 0, model.rowCount() -1 );
   updateRowVisibility();
+
+  proxy_model.timeMaxUpdated( dateTime );
 }
 
 void rqt_console2::LogWidget::on_timeRangeMin_dateTimeChanged(const QDateTime &dateTime)
@@ -468,4 +491,6 @@ void rqt_console2::LogWidget::on_timeRangeMin_dateTimeChanged(const QDateTime &d
 
   applyTimeFilter( 0, model.rowCount() -1 );
   updateRowVisibility();
+
+  proxy_model.timeMinUpdated( dateTime );
 }

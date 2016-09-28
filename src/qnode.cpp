@@ -26,7 +26,8 @@ namespace rqt_console2 {
 ** Implementation
 *****************************************************************************/
 
-QNode::QNode(int argc, char** argv, LogsTableModel& tablemodel ) :
+QNode::QNode(int argc, char** argv, LogsTableModel& tablemodel , QObject *parent) :
+  QObject(parent),
   init_argc(argc),
   init_argv(argv),
   model(tablemodel)
@@ -51,7 +52,6 @@ bool QNode::init()
   // Add your ros communications here.
   _node.reset( new ros::NodeHandle );
 
-  start();
   return true;
 }
 
@@ -67,17 +67,12 @@ bool QNode::init(const std::string &master_url, const std::string &host_url) {
 
   _node.reset( new ros::NodeHandle );
 
-  this->start();
   return true;
 }
 
-void QNode::run()
+void QNode::spin()
 {
-  ros::spin();
-
-  std::cout << "Ros shutdown, proceeding to close the gui." << std::endl;
-
-  Q_EMIT rosShutdown(); // used to signal the gui for a shutdown (useful to roslaunch)
+  ros::spinOnce();
 }
 
 bool QNode::started()
@@ -97,7 +92,24 @@ void QNode::unsubcribeRosout()
 
 void QNode::callbackRosout(const rosgraph_msgs::Log::ConstPtr &msg)
 {
-  model.appendRow( *msg );
+  static std::vector<rosgraph_msgs::Log::ConstPtr> buffer;
+  buffer.reserve( 250 );
+  static ros::Time prev_time = ros::Time::now();
+
+  ros::Time curr_time = ros::Time::now();
+
+  const ros::Duration delay( 0.1 );
+
+  if( curr_time - prev_time < delay &&  buffer.size() < 250)
+  {
+      buffer.push_back( msg );
+  }
+  else{
+    prev_time = curr_time;
+    model.appendRow( buffer );
+    buffer.clear();
+  }
+
 }
 
 #ifdef USE_ROSOUT2
