@@ -1,5 +1,5 @@
 /**
- * @file /include/rqt_console2/qnode.hpp
+ * @file /include/rqt_console_plus/qnode.hpp
  *
  * @brief Communications central!
  *
@@ -9,8 +9,8 @@
 ** Ifdefs
 *****************************************************************************/
 
-#ifndef rqt_console2_QNODE_HPP_
-#define rqt_console2_QNODE_HPP_
+#ifndef rqt_console_plus_QNODE_HPP_
+#define rqt_console_plus_QNODE_HPP_
 
 /*****************************************************************************
 ** Includes
@@ -26,7 +26,7 @@
 ** Namespaces
 *****************************************************************************/
 
-namespace rqt_console2 {
+namespace rqt_console_plus {
 
 /*****************************************************************************
 ** Class
@@ -76,6 +76,6 @@ private:
 #endif
 };
 
-}  // namespace rqt_console2
+}  // namespace rqt_console_plus
 
-#endif /* rqt_console2_QNODE_HPP_ */
+#endif /* rqt_console_plus_QNODE_HPP_ */

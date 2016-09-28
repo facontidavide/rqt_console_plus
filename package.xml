@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
-  <name>rqt_console2</name>
-  <version>0.2.0</version>
+  <name>rqt_console_plus</name>
+  <version>0.3.0</version>
   <description>
 
      rqt_console2

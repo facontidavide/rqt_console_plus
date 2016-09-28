@@ -4,6 +4,7 @@
 #include <QSortFilterProxyModel>
 #include <QDateTime>
 #include <QString>
+#include <QRegExpValidator>
 
 class ModelFilter : public QSortFilterProxyModel
 {
@@ -12,10 +13,9 @@ public:
   explicit ModelFilter(QObject *parent = 0);
 
   typedef enum{
-    CONTAINS_ALL,
-    CONTAINS_ONE,
-    WINDCARD,
-    REGEX
+    CONTAINS_ONE = 0,
+    WILDCARDS = 1,
+    REGEX = 2
   }FilterMode;
 
 signals:
@@ -38,10 +38,13 @@ public slots:
   void setSeverityErrorEnabled(bool enabled);
   void setSeverityWarningsEnabled(bool enabled);
 
+private:
+  bool applyFilter(const QString &filter, ModelFilter::FilterMode mode,
+                   const QString& text_to_parse, const QRegExpValidator *validator) const;
 
 protected:
   virtual bool filterAcceptsRow(int sourceRow,
-          const QModelIndex &sourceParent) const override;
+                                const QModelIndex &sourceParent) const override;
 
   QDateTime _min;
   QDateTime _max;
@@ -63,6 +66,10 @@ protected:
   QString _node_text;
   QString _msg_text;
   QString _source_text;
+
+  QRegExpValidator _node_validator;
+  QRegExpValidator _msg_validator;
+  QRegExpValidator _source_validator;
 };
 
 #endif // MODELFILTER_HPP

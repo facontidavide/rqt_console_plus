@@ -3,7 +3,7 @@
 ##############################################################################
 
 cmake_minimum_required(VERSION 2.8.0)
-project(rqt_console2)
+project(rqt_console_plus)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fPIC -DUSE_ROSOUT2=1")
 
@@ -70,7 +70,7 @@ catkin_package(
 
 file(GLOB QT_FORMS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ui/*.ui)
 file(GLOB QT_RESOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} resources/*.qrc)
-file(GLOB_RECURSE QT_MOC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} FOLLOW_SYMLINKS include/rqt_console2/*.hpp)
+file(GLOB_RECURSE QT_MOC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} FOLLOW_SYMLINKS include/rqt_console_plus/*.hpp)
 
 QT5_ADD_RESOURCES(QT_RESOURCES_CPP ${QT_RESOURCES})
 QT5_WRAP_UI(QT_FORMS_HPP ${QT_FORMS})
@@ -86,9 +86,9 @@ file(GLOB_RECURSE QT_SOURCES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} FOLLOW_SYMLINK
 # Binaries
 ##############################################################################
 
-add_executable(rqt_console2 ${QT_SOURCES} ${QT_RESOURCES_CPP} ${QT_FORMS_HPP} ${QT_MOC_HPP})
-target_link_libraries(rqt_console2 ${QT_LIBRARIES} ${catkin_LIBRARIES})
-install(TARGETS rqt_console2 RUNTIME DESTINATION /usr/local/bin)
+add_executable(rqt_console_plus ${QT_SOURCES} ${QT_RESOURCES_CPP} ${QT_FORMS_HPP} ${QT_MOC_HPP})
+target_link_libraries(rqt_console_plus ${QT_LIBRARIES} ${catkin_LIBRARIES})
+install(TARGETS rqt_console_plus RUNTIME DESTINATION /usr/local/bin)
 
 
 #########################  create a package ####################################
@@ -104,15 +104,15 @@ SET(CPACK_INCLUDE_TOPLEVEL_DIRECTORY 0)
 
 SET(CPACK_DEBIAN_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
 
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "rqt_console2")
+SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "rqt_console_plus")
 SET(CPACK_PACKAGE_VENDOR "Icarus Technology")
 
 SET(CPACK_PACKAGE_VERSION_MAJOR "0")
-SET(CPACK_PACKAGE_VERSION_MINOR "2")
+SET(CPACK_PACKAGE_VERSION_MINOR "3")
 SET(CPACK_PACKAGE_VERSION_PATCH "0")
-SET(CPACK_PACKAGE_VERSION "0.2.0")
+SET(CPACK_PACKAGE_VERSION "0.3.0")
 
-SET(CPACK_PACKAGE_NAME "rqt_console2${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}")
+SET(CPACK_PACKAGE_NAME "rqt_console_plus${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}")
 
 SET(CPACK_DEBIAN_PACKAGE_DEPENDS "qt5-default")
 

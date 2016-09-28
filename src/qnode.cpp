@@ -14,13 +14,13 @@
 #include <ros/network.h>
 #include <string>
 #include <sstream>
-#include "../include/rqt_console2/qnode.hpp"
+#include "../include/rqt_console_plus/qnode.hpp"
 
 /*****************************************************************************
 ** Namespaces
 *****************************************************************************/
 
-namespace rqt_console2 {
+namespace rqt_console_plus {
 
 /*****************************************************************************
 ** Implementation
@@ -43,7 +43,7 @@ QNode::~QNode() {
 
 bool QNode::init()
 {
-  ros::init(init_argc,init_argv,"rqt_console2");
+  ros::init(init_argc,init_argv,"rqt_console_plus");
   if ( ! ros::master::check() ) {
     return false;
   }
@@ -59,7 +59,7 @@ bool QNode::init(const std::string &master_url, const std::string &host_url) {
   std::map<std::string,std::string> remappings;
   remappings["__master"] = master_url;
   remappings["__hostname"] = host_url;
-  ros::init(remappings,"rqt_console2");
+  ros::init(remappings,"rqt_console_plus");
   if ( ! ros::master::check() ) {
     return false;
   }
@@ -131,4 +131,4 @@ void QNode::callbackRosout2(const rosout2_msg::LogMsg::ConstPtr &msg)
 
 
 
-}  // namespace rqt_console2
+}  // namespace rqt_console_plus

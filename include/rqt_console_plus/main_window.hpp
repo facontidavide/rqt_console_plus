@@ -1,12 +1,12 @@
 /**
- * @file /include/rqt_console2/main_window.hpp
+ * @file /include/rqt_console_plus/main_window.hpp
  *
- * @brief Qt based gui for rqt_console2.
+ * @brief Qt based gui for rqt_console_plus.
  *
  * @date November 2010
  **/
-#ifndef rqt_console2_MAIN_WINDOW_H
-#define rqt_console2_MAIN_WINDOW_H
+#ifndef rqt_console_plus_MAIN_WINDOW_H
+#define rqt_console_plus_MAIN_WINDOW_H
 
 /*****************************************************************************
 ** Includes
@@ -22,7 +22,7 @@
 ** Namespace
 *****************************************************************************/
 
-namespace rqt_console2 {
+namespace rqt_console_plus {
 
 /*****************************************************************************
 ** Interface [MainWindow]
@@ -67,6 +67,6 @@ private:
 
 };
 
-}  // namespace rqt_console2
+}  // namespace rqt_console_plus
 
-#endif // rqt_console2_MAIN_WINDOW_H
+#endif // rqt_console_plus_MAIN_WINDOW_H

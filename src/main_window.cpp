@@ -20,10 +20,10 @@
 #include <QIcon>
 #include <QTimer>
 #include <iostream>
-#include "../include/rqt_console2/main_window.hpp"
-#include "../include/rqt_console2/logwidget.hpp"
+#include "../include/rqt_console_plus/main_window.hpp"
+#include "../include/rqt_console_plus/logwidget.hpp"
 
-namespace rqt_console2 {
+namespace rqt_console_plus {
 
 using namespace Qt;
 
@@ -57,7 +57,7 @@ MainWindow::~MainWindow() {}
 
 void MainWindow::loadRosbag()
 {
-  QSettings settings( "Martianbots", "rqt_console2");
+  QSettings settings( "Martianbots", "rqt_console_plus");
   QString directory_path = settings.value("MainWindow.loadRosbag.directory", QDir::currentPath() ).toString();
 
   QString filename = QFileDialog::getOpenFileName(this,
@@ -84,10 +84,10 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 
 
-}  // namespace rqt_console2
+}  // namespace rqt_console_plus
 
 
-void rqt_console2::MainWindow::on_actionSave_Layout_triggered()
+void rqt_console_plus::MainWindow::on_actionSave_Layout_triggered()
 {
   QDomDocument doc;
   QDomProcessingInstruction instr =
@@ -105,7 +105,7 @@ void rqt_console2::MainWindow::on_actionSave_Layout_triggered()
   doc.appendChild( root );
 
 
-  QSettings settings( "Martianbots", "rqt_console2");
+  QSettings settings( "Martianbots", "rqt_console_plus");
 
   QString directory_path  = settings.value("MainWindow.on_actionSave_Layout_triggered.directory",
                                            QDir::currentPath() ). toString();
@@ -130,9 +130,9 @@ void rqt_console2::MainWindow::on_actionSave_Layout_triggered()
 
 }
 
-void rqt_console2::MainWindow::on_actionLoadLayout_triggered()
+void rqt_console_plus::MainWindow::on_actionLoadLayout_triggered()
 {
-  QSettings settings( "Martianbots", "rqt_console2");
+  QSettings settings( "Martianbots", "rqt_console_plus");
 
   QString directory_path  = settings.value("MainWindow.on_actionLoadLayout_triggered.directory",
                                            QDir::currentPath() ). toString();
@@ -189,19 +189,19 @@ void rqt_console2::MainWindow::on_actionLoadLayout_triggered()
 
 }
 
-void rqt_console2::MainWindow::newTab()
+void rqt_console_plus::MainWindow::newTab()
 {
   ui.tab_manager->insertTab(0, new LogWidget(model, this), QString("logging"));
   ui.tab_manager->setCurrentIndex(0); // ensure the first tab is showing
 }
 
-void rqt_console2::MainWindow::on_tab_manager_tabCloseRequested(int index)
+void rqt_console_plus::MainWindow::on_tab_manager_tabCloseRequested(int index)
 {
   if( ui.tab_manager->count() > 1)
     ui.tab_manager->removeTab(index);
 }
 
-void rqt_console2::MainWindow::on_actionListen_rosout_toggled(bool toggled)
+void rqt_console_plus::MainWindow::on_actionListen_rosout_toggled(bool toggled)
 {
   if( qnode.started() == false)
   {
@@ -217,7 +217,7 @@ void rqt_console2::MainWindow::on_actionListen_rosout_toggled(bool toggled)
 }
 
 #ifdef USE_ROSOUT2
-void rqt_console2::MainWindow::on_actionListen_rosout2_toggled(bool toggled)
+void rqt_console_plus::MainWindow::on_actionListen_rosout2_toggled(bool toggled)
 {
   if( qnode.started() == false)
   {

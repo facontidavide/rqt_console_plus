@@ -57,7 +57,7 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="0,0,0,0,1,0">
+       <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="0,0,0,1,0">
         <item>
          <spacer name="horizontalSpacer_2">
           <property name="orientation">
@@ -72,29 +72,12 @@
          </spacer>
         </item>
         <item>
-         <widget class="QComboBox" name="comboBoxMessageInclude">
-          <property name="enabled">
-           <bool>true</bool>
-          </property>
-          <item>
-           <property name="text">
-            <string>Show</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Hide</string>
-           </property>
-          </item>
-         </widget>
-        </item>
-        <item>
          <widget class="QLabel" name="labelMessageFilter">
           <property name="enabled">
            <bool>true</bool>
           </property>
           <property name="text">
-           <string>if message body</string>
+           <string>Show message body if</string>
           </property>
          </widget>
         </item>
@@ -117,12 +100,7 @@
           </property>
           <item>
            <property name="text">
-            <string extracomment="Contains all the space separated fragments">contains (all)</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string extracomment="Contains at least one of the space separated fragments">containes (at least)</string>
+            <string extracomment="Contains at least one of the space separated fragments">containes</string>
            </property>
           </item>
           <item>
@@ -277,7 +255,7 @@
            <bool>false</bool>
           </property>
           <property name="text">
-           <string>Show if logger name :</string>
+           <string>Show if logger name if</string>
           </property>
          </widget>
         </item>
@@ -300,12 +278,7 @@
           </property>
           <item>
            <property name="text">
-            <string>contains (all)</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>contains (at least)</string>
+            <string>contains</string>
            </property>
           </item>
           <item>

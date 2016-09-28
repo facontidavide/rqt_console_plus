@@ -1,4 +1,4 @@
-#include "../include/rqt_console2/logs_table_model.hpp"
+#include "../include/rqt_console_plus/logs_table_model.hpp"
 #include <QDateTime>
 #include <QBrush>
 #include <QColor>
@@ -203,6 +203,8 @@ void LogsTableModel::appendRow(const std::vector<rosgraph_msgs::Log::ConstPtr>& 
   {
     this->beginRemoveRows( QModelIndex(), 0 , to_shift-1);
     this->endRemoveRows();
+
+    emit dataChanged( index(0,0), index( rowCount()-1, columnCount() -1));
   }
 
   this->beginInsertRows( QModelIndex(), first_row , last_row);

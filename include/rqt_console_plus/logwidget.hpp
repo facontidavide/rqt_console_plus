@@ -1,7 +1,7 @@
 /**
- * @file /include/rqt_console2/main_window.hpp
+ * @file /include/rqt_console_plus/main_window.hpp
  *
- * @brief Qt based gui for rqt_console2.
+ * @brief Qt based gui for rqt_console_plus.
  *
  * @date November 2010
  **/
@@ -25,7 +25,7 @@
 ** Namespace
 *****************************************************************************/
 
-namespace rqt_console2 {
+namespace rqt_console_plus {
 
 
 class LogWidget : public QWidget
@@ -52,16 +52,9 @@ private slots:
 
   void on_comboBoxMessageFilter_currentIndexChanged(int index);
 
-  void on_comboBoxMessageInclude_currentIndexChanged(int index);
-
   void on_buttonEnableDebug_toggled(bool checked);
 
   void on_rowsInserted(const QModelIndex & parent, int first_row, int last_row);
-
-  void on_rowsShifted(int shift);
-
-  void on_rowsRemoved(const QModelIndex & parent, int first, int last_row);
-
 
   void on_buttonEnableInfo_toggled(bool checked);
 
@@ -83,31 +76,11 @@ private:
   Ui::LogWidgetDesign ui;
   LogsTableModel& model;
 
-  boost::circular_buffer<bool> message_filter;
-  boost::circular_buffer<bool> logger_filter;
-  boost::circular_buffer<bool> time_filter;
-  boost::circular_buffer<bool> severity_filter;
-
-  void applyFilter(QLineEdit* line_edit, QComboBox* combo,
-                   boost::circular_buffer<bool> &filter_vector,
-                   std::function<const QString&(int)>,
-                   int first_row, int last_row);
-
-  void applyMessageFilter(int first_row, int last_row);
-
-  void applyLoggerFilter(int first_row, int last_row);
-
-  void applyTimeFilter(int first_row, int last_row);
-
-  void applySeverityFilter(int first_row, int last_row);
-
-  void updateRowVisibility(int model_count = -1);
-
   void updateTimeRange();
 
   ModelFilter proxy_model;
 };
 
-}  // namespace rqt_console2
+}  // namespace rqt_console_plus
 
-#endif // rqt_console2_MAIN_WINDOW_H
+#endif // rqt_console_plus_MAIN_WINDOW_H
