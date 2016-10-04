@@ -144,7 +144,7 @@ void LogWidget::on_comboBoxMessageFilter_currentIndexChanged(int mode)
 {
   proxy_model.messageFilterUpdated(
         static_cast<ModelFilter::FilterMode>( mode ),
-         ui.lineEditMessageFilter->text() );
+        ui.lineEditMessageFilter->text() );
 }
 
 void LogWidget::on_lineEditLoggerFilter_textEdited(const QString &filter)
@@ -158,7 +158,7 @@ void LogWidget::on_comboBoxLoggerFilter_currentIndexChanged(int mode)
 {
   proxy_model.nodeFilterUpdated(
         static_cast<ModelFilter::FilterMode>( mode ),
-         ui.lineEditLoggerFilter->text() );
+        ui.lineEditLoggerFilter->text() );
 }
 
 void LogWidget::on_checkBoxMessageFilter_toggled(bool checked)
@@ -191,6 +191,9 @@ void LogWidget::on_checkBoxLoggerFilter_toggled(bool checked)
 
 void LogWidget::updateTimeRange()
 {
+  if (model.rowCount() == 0){
+    return;
+  }
   ui.timeRangeMin->setMinimumDateTime( model.timestamp(0) );
   ui.timeRangeMax->setMinimumDateTime( model.timestamp(0) );
 

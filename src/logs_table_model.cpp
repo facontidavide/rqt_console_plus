@@ -76,9 +76,9 @@ QVariant LogsTableModel::data(const QModelIndex &index, int role) const
       case ERROR:      return "ERROR";
       }
     } break;
-    case 3: return log.node;
+    case 3: return QString::fromStdString( log.node.get() );
     case 4: return log.message;
-    case 5: return log.source;
+    case 5: return QString::fromStdString( log.source.get() );
     }
   }
   else if( role== Qt::ForegroundRole){
@@ -96,9 +96,9 @@ QVariant LogsTableModel::data(const QModelIndex &index, int role) const
     case 0: return log.count;
     case 1: return log.time_raw;
     case 2: return log.level_raw;
-    case 3: return log.node;
+    case 3: return QString::fromStdString( log.node.get() );
     case 4: return log.message;
-    case 5: return log.source;
+    case 5: return QString::fromStdString( log.source.get() );
     }
   }
   else{
@@ -121,11 +121,12 @@ LogsTableModel::LogItem LogsTableModel::convertRosout( const rosgraph_msgs::Log 
   item.count   = _count;
   item.node    = log.name.c_str();
 
-  item.source  = log.file.c_str();
-  item.source  += QString(" ");
-  item.source  += log.function.c_str();
-  item.source  += QString(":");
-  item.source  += QString::number(log.line);
+  std::string source = log.file;
+  source  += std::string(" ");
+  source  += log.function;
+  source  += std::string(":");
+  source  += std::to_string(log.line);
+  item.source = source;
 
   item.message = log.msg.c_str();
 
@@ -220,7 +221,7 @@ const QString &LogsTableModel::message(int index) const
 
 const QString &LogsTableModel::nodeName(int index) const
 {
-  return _logs[ index ].node;
+  return QString::fromStdString( _logs[ index ].node.get() );
 }
 
 LogsTableModel::Severity LogsTableModel::severity(int index) const

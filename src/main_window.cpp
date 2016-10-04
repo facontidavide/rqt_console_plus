@@ -74,6 +74,14 @@ void MainWindow::loadRosbag()
   bag.open( filename.toStdString(), rosbag::bagmode::Read );
 
   model.loadRosbag( bag );
+
+  if( model.rowCount() == 0){
+    QMessageBox msgBox;
+    msgBox.setText("The rosbag didn't contain any log message");
+    msgBox.exec();
+  }
+
+
 }
 
 

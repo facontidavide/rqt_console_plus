@@ -7,7 +7,7 @@
 #include <rosgraph_msgs/Log.h>
 #include <rosbag/view.h>
 #include <boost/circular_buffer.hpp>
-
+#include <boost/flyweight.hpp>
 
 #ifdef USE_ROSOUT2
   #include <rosout2_msg/LogMsg.h>
@@ -60,9 +60,9 @@ private:
     QDateTime time_raw;
     QString  time_text;
     Severity level_raw;
-    QString node;
+    boost::flyweight<std::string> node;
     QString message;
-    QString source;
+    boost::flyweight<std::string> source;
   }LogItem;
 
   boost::circular_buffer<LogItem> _logs;
