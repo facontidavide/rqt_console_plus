@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>QRosApp</string>
+   <string>rqt_console_plus</string>
   </property>
   <property name="windowIcon">
    <iconset resource="../resources/images.qrc">
@@ -100,7 +100,7 @@
           </property>
           <item>
            <property name="text">
-            <string extracomment="Contains at least one of the space separated fragments">containes</string>
+            <string extracomment="Contains at least one of the space separated fragments">contains</string>
            </property>
           </item>
           <item>

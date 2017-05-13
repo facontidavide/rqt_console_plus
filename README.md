@@ -2,7 +2,7 @@
 
 This GUI is meant to be used as a replacement of [rqt_console](http://wiki.ros.org/rqt_console).
 
-Someone might reasonably ask: "dude, what that __really__ necessary?"
+Someone might reasonably ask: "dude, was that __really__ necessary?"
 
 The answer is of course "no".
 
@@ -10,7 +10,7 @@ What this version offers is:
 
 - A slightly different GUI. You may prefer it or not.
 - Multiple tabs (I really need them).
-- Save and load your parameters, configurtion and layout in a file.
+- Save and load your parameters, configuration and layout in a file.
 - It can either subscribe to `/rosout` or/and load the log messages from a rosbag.
 - It is written in C++ (rqt_console uses Python).
 
